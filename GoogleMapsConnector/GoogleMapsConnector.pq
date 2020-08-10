@@ -2,25 +2,33 @@
 section GoogleMapsConnector;
 
 [DataSource.Kind="GoogleMapsConnector", Publish="GoogleMapsConnector.Publish"]
-shared GoogleMapsConnector.Contents = (optional originList as text, optional destinationList as text) =>
+shared GoogleMapsConnector.Contents = (originList as text, destinationList as text) =>
     let
-    Source = Json.Document(Web.Contents("https://maps.googleapis.com/maps/api/distancematrix/" & "json?units=imperial" & "&origins=" & originList & "&destinations=" & destinationList & "&key=AIzaSyCRMD2v90ZMEqXdF8n5RmqTpAX0hhe_MGg")),
-    rows = Source[rows],
-    #"Converted to Table" = Table.FromList(rows, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-    #"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table", "Column1", {"elements"}, {"elements"}),
-    #"Expanded elements" = Table.ExpandListColumn(#"Expanded Column1", "elements"),
-    #"Expanded elements1" = Table.ExpandRecordColumn(#"Expanded elements", "elements", {"distance", "duration", "status"}, {"distance", "duration", "status"}),
-    #"Expanded distance" = Table.ExpandRecordColumn(#"Expanded elements1", "distance", {"text", "value"}, {"text", "value"}),
-    #"Expanded duration" = Table.ExpandRecordColumn(#"Expanded distance", "duration", {"text", "value"}, {"text.1", "value.1"}),
-    #"Removed Columns" = Table.RemoveColumns(#"Expanded duration",{"value", "value.1", "status"}),
-    #"Renamed Columns" = Table.RenameColumns(#"Removed Columns",{{"text", "Distance"}, {"text.1", "Time"}})
-in
-    #"Renamed Columns";
+        apiKey = Extension.CurrentCredential()[Key],
+        Source = Json.Document(Web.Contents("https://maps.googleapis.com/maps/api/distancematrix/" & "json?units=imperial" & "&origins=" & originList & "&destinations=" & destinationList & "&key=" & apiKey)),
+        rows = Source[rows],
+        #"Converted to Table" = Table.FromList(rows, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+        #"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table", "Column1", {"elements"}, {"elements"}),
+        #"Expanded elements" = Table.ExpandListColumn(#"Expanded Column1", "elements"),
+        #"Expanded elements1" = Table.ExpandRecordColumn(#"Expanded elements", "elements", {"distance", "duration", "status"}, {"distance", "duration", "status"}),
+        #"Expanded distance" = Table.ExpandRecordColumn(#"Expanded elements1", "distance", {"text", "value"}, {"text", "value"}),
+        #"Expanded duration" = Table.ExpandRecordColumn(#"Expanded distance", "duration", {"text", "value"}, {"text.1", "value.1"}),
+        #"Removed Columns" = Table.RemoveColumns(#"Expanded duration",{"value", "value.1", "status"}),
+        #"Renamed Columns" = Table.RenameColumns(#"Removed Columns",{{"text", "Distance"}, {"text.1", "Time"}})
+    in
+        #"Renamed Columns";
 
 // Data Source Kind description
 GoogleMapsConnector = [
+    TestConnection = (dataSourcePath) => 
+        let
+            json = Json.Document(dataSourcePath),
+            origins = json[originList],
+            destinations = json[destinationList]
+        in
+            { "GoogleMapsConnector.Conents", origins, destinations}, 
     Authentication = [
-        // Key = [],
+        Key = [],
         // UsernamePassword = [],
         // Windows = [],
         Implicit = []
