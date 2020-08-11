@@ -2,9 +2,8 @@
 section GoogleMapsConnector;
 
 [DataSource.Kind="GoogleMapsConnector", Publish="GoogleMapsConnector.Publish"]
-shared GoogleMapsConnector.Contents = (originList as text, destinationList as text) =>
+shared GoogleMapsConnector.Contents = (originList as text, destinationList as text, apiKey as text) =>
     let
-        apiKey = Extension.CurrentCredential()[Key],
         Source = Json.Document(Web.Contents("https://maps.googleapis.com/maps/api/distancematrix/" & "json?units=imperial" & "&origins=" & originList & "&destinations=" & destinationList & "&key=" & apiKey)),
         rows = Source[rows],
         #"Converted to Table" = Table.FromList(rows, Splitter.SplitByNothing(), null, null, ExtraValues.Error),

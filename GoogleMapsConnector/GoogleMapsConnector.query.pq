@@ -1,5 +1,5 @@
 ﻿// Use this file to write queries to test your data connector
 let
-    result = GoogleMapsConnector.Contents("California", "Florida")
+    result = GoogleMapsConnector.Contents("California", "Florida", "API_KEY")
 in
     result
