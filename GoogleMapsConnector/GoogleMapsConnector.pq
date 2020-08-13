@@ -1,11 +1,17 @@
 ﻿// This file contains your Data Connector logic
 section GoogleMapsConnector;
 
+ API_KEY = Text.FromBinary(Extension.Contents("config.txt"));
+
+
 [DataSource.Kind="GoogleMapsConnector", Publish="GoogleMapsConnector.Publish"]
-shared GoogleMapsConnector.Contents = (originList as text, destinationList as text, apiKey as text) =>
+shared GoogleMapsConnector.Contents = (originList as text, destinationList as text) =>
     let
-        Source = Json.Document(Web.Contents("https://maps.googleapis.com/maps/api/distancematrix/" & "json?units=imperial" & "&origins=" & originList & "&destinations=" & destinationList & "&key=" & apiKey)),
+        url = "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=" & originList & "&destinations=" & destinationList & "&key=" & API_KEY,
+        Source = Json.Document(Web.Contents(url, [Timeout=#duration(0,0,10,0)])),
         rows = Source[rows],
+
+        
         #"Converted to Table" = Table.FromList(rows, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
         #"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table", "Column1", {"elements"}, {"elements"}),
         #"Expanded elements" = Table.ExpandListColumn(#"Expanded Column1", "elements"),
@@ -13,24 +19,19 @@ shared GoogleMapsConnector.Contents = (originList as text, destinationList as te
         #"Expanded distance" = Table.ExpandRecordColumn(#"Expanded elements1", "distance", {"text", "value"}, {"text", "value"}),
         #"Expanded duration" = Table.ExpandRecordColumn(#"Expanded distance", "duration", {"text", "value"}, {"text.1", "value.1"}),
         #"Removed Columns" = Table.RemoveColumns(#"Expanded duration",{"value", "value.1", "status"}),
-        #"Renamed Columns" = Table.RenameColumns(#"Removed Columns",{{"text", "Distance"}, {"text.1", "Time"}})
+        #"Renamed Columns" = Table.RenameColumns(#"Removed Columns",{{"text", "Distance"}, {"text.1", "Duration"}})
     in
         #"Renamed Columns";
 
 // Data Source Kind description
 GoogleMapsConnector = [
-    TestConnection = (dataSourcePath) => 
-        let
-            json = Json.Document(dataSourcePath),
-            origins = json[originList],
-            destinations = json[destinationList]
-        in
-            { "GoogleMapsConnector.Conents", origins, destinations}, 
+    
+    TestConnection = (dataSourcePath) => { "GoogleMapsConnector.Contents", "Bangor", "Orono", API_KEY}, 
     Authentication = [
-        Key = [],
+        // Key = [],
         // UsernamePassword = [],
         // Windows = [],
-        Implicit = []
+        Anonymous  = []
     ],
     Label = Extension.LoadString("DataSourceLabel")
 ];

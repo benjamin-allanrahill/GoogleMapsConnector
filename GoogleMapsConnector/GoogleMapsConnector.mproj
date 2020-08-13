@@ -67,6 +67,9 @@
     <Compile Include="resources.resx">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="config.txt">
+      <SubType>Content</SubType>
+    </Compile>
     <Content Include="GoogleMapsConnector.query.pq">
       <SubType>Code</SubType>
     </Content>
