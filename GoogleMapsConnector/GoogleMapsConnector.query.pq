@@ -7,6 +7,12 @@ let
     Name = #"Converted to Table"{0}[Name],
     API_KEY = #"Converted to Table"{0}[Value] as text,
     */
-    result = GoogleMapsConnector.Contents("California", "Florida")
+    t = Table.FromColumns(
+    {
+        {"Bangor, ME", "Orono, ME", "Portland, ME"}, { "Florida", "Texas", "Boston"}
+    },
+    {"Origin", "Destination"}
+    ),
+    result = GoogleMapsConnector.Contents(t)
 in
     result

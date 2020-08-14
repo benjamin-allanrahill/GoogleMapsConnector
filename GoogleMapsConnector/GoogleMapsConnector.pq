@@ -5,13 +5,16 @@ section GoogleMapsConnector;
 
 
 [DataSource.Kind="GoogleMapsConnector", Publish="GoogleMapsConnector.Publish"]
-shared GoogleMapsConnector.Contents = (originList as text, destinationList as text) =>
-    let
-        url = "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=" & originList & "&destinations=" & destinationList & "&key=" & API_KEY,
-        Source = Json.Document(Web.Contents(url, [Timeout=#duration(0,0,10,0)])),
-        rows = Source[rows],
 
-        
+// function to get the distance and duration for each column
+GoogleMapsConnector.RowData = (origin as text, destination as text) =>
+    let
+        url = "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=" & origin & "&destinations=" & destination & "text)" & API_KEY,
+        Source = Json.Document(Web.Contents(url, [Timeout=#duration(0,0,10,0)])),
+        rows = Source[rows]
+
+        /*
+        ,
         #"Converted to Table" = Table.FromList(rows, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
         #"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table", "Column1", {"elements"}, {"elements"}),
         #"Expanded elements" = Table.ExpandListColumn(#"Expanded Column1", "elements"),
@@ -22,15 +25,24 @@ shared GoogleMapsConnector.Contents = (originList as text, destinationList as te
         #"Renamed Columns" = Table.RenameColumns(#"Removed Columns",{{"text", "Distance"}, {"text.1", "Duration"}})
     in
         #"Renamed Columns";
+        */
+    in
+        rows;
 
+//function get distance for each a column
+shared GoogleMapsConnector.Contents = (locTable as table) => 
+    let
+       Table = Table.AddColumn(locTable, "Custom", each GoogleMapsConnector.RowData([Origin], [Destination]))
+    in
+        Table;
 // Data Source Kind description
 GoogleMapsConnector = [
     
-    TestConnection = (dataSourcePath) => { "GoogleMapsConnector.Contents", "Bangor", "Orono", API_KEY}, 
+    TestConnection = () => { "GoogleMapsConnector.Contents", "Bangor", "Orono"}, 
     Authentication = [
         // Key = [],
         // UsernamePassword = [],
-        // Windows = [],
+       // Windows = [],
         Anonymous  = []
     ],
     Label = Extension.LoadString("DataSourceLabel")
